@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <!-- <appName>MyApplication</appName>
+     <version>1.0.0</version>-->
+
+
+    <tableConfigList>
+        <tableConfig>
+            <!--开关-->
+            <genSwitch>true</genSwitch>
+            <!--模式：sql-根据建表语句生成代码；   -->
+            <model>sql</model>
+            <authorName>zhouchuanxiang</authorName>
+
+            <!--SQL建表语句-->
+            <sql>
+                CREATE TABLE `t_aut_org_odr_appro` (
+                `ID` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+                `CREATED_AT` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                `CREATED_BY` varchar(128) NOT NULL DEFAULT 'SYS' COMMENT '创建人',
+                `UPDATED_AT` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时间',
+                `UPDATED_BY` varchar(128) NOT NULL DEFAULT 'SYS' COMMENT '修改人',
+                `ENV` varchar(32) NOT NULL COMMENT '环境标识,线下:dev(开发环境),sit(集成测试环境),stb(稳定环境);
+                线上:pre(预发环境),gry(灰度环境),prd(生产环境)',
+                `SHADOW` tinyint(1) NOT NULL DEFAULT '0' COMMENT '影子标识位,1:影子;0:非影子',
+                `IPRID_PARTITION` varchar(2) NOT NULL DEFAULT '00' COMMENT '用户分区标识',
+                `DATE_PARTITION` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '时间分区',
+                `status` varchar(1) DEFAULT '1' COMMENT '有效状态，有效-1，无效-0',
+                `org_code` varchar(128) DEFAULT NULL COMMENT '机构编码',
+                `position_code` varchar(256) NOT NULL COMMENT '职位编码',
+                `position_name` varchar(256) NOT NULL COMMENT '职位名称',
+                `approal_name` varchar(256) NOT NULL COMMENT '审核人用户名',
+                `approal_real_name` varchar(256) NOT NULL COMMENT '审核人真实姓名',
+                `remark` varchar(256) DEFAULT NULL COMMENT '备注',
+                `ext` varchar(512) DEFAULT NULL COMMENT '扩展字段',
+                PRIMARY KEY (`ID`),
+                UNIQUE KEY `UIDX_ORG_POSITION_CODE` (`org_code`, `position_code`) BLOCK_SIZE 16384 LOCAL
+                ) AUTO_INCREMENT = 72 AUTO_INCREMENT_MODE = 'ORDER' DEFAULT CHARSET = utf8mb4 ROW_FORMAT = DYNAMIC
+                COMPRESSION = 'zstd_1.3.8' REPLICA_NUM = 3 BLOCK_SIZE = 16384 USE_BLOOM_FILTER = FALSE TABLET_SIZE =
+                134217728 PCTFREE = 0 COMMENT = '机构工单审批表'
+            </sql>
+            <!--建表语句表名忽略的前缀-->
+            <sqlIgnorePrefix>t_aut_</sqlIgnorePrefix>
+
+
+            <!-- ================== 后缀配置 ================== -->
+            <!--dto的后缀，如DTO还是DO等-->
+            <dtoSuffix>DTO</dtoSuffix>
+            <!--mapper的后缀，如Mapper还是Dao等-->
+            <mapperSuffix>Mapper</mapperSuffix>
+            <!--manager的后缀，如Manager还是Service等-->
+            <managerSuffix>Manager</managerSuffix>
+
+
+            <!-- ================== 包名配置 ================== -->
+            <!--dto所在包名-->
+            <dtoPackageName>com.best.riskcontrol.riskptspboss.dal.riskptspdb.dataobject</dtoPackageName>
+            <!--mapper所在包名-->
+            <mapperPackageName>com.best.riskcontrol.riskptspboss.dal.riskptspdb.mapper</mapperPackageName>
+            <!--service/manager所在包名-->
+            <managerPackageName>com.best.riskcontrol.riskptspboss.dal.riskptspdb.mapper</managerPackageName>
+            <controllerPackageName>com.best.riskcontrol.riskptspboss.dal.riskptspdb.mapper</controllerPackageName>
+
+            <!-- ================== 输出本地路径配置 ================== -->
+            <dtoLocalPath>test</dtoLocalPath>
+            <mapperLocalPath>test</mapperLocalPath>
+            <managerLocalPath>test</managerLocalPath>
+            <controllerLocalPath>test</controllerLocalPath>
+
+
+        </tableConfig>
+
+
+
+    </tableConfigList>
+
+</config>

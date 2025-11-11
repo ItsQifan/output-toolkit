@@ -1,0 +1,133 @@
+[
+  {
+    "group": "mybatis",
+    "templates": [
+      {
+        "id": "20",
+        "name": "controller",
+        "description": "controller"
+      },
+      {
+        "id": "21",
+        "name": "service",
+        "description": "service"
+      },
+      {
+        "id": "22",
+        "name": "service_impl",
+        "description": "service_impl"
+      },
+      {
+        "id": "23",
+        "name": "mapper",
+        "description": "mapper"
+      },
+      {
+        "id": "24",
+        "name": "mybatis",
+        "description": "mybatis"
+      },
+      {
+        "id": "25",
+        "name": "model",
+        "description": "model"
+      },
+      {
+        "id": "26",
+        "name": "mapper2",
+        "description": "mapper annotation"
+      }
+    ]
+  },
+  {
+    "group": "util",
+    "templates": [
+      {
+        "id": "70",
+        "name": "beanutil",
+        "description": "beanutil"
+      },
+      {
+        "id": "71",
+        "name": "json",
+        "description": "json"
+      },
+      {
+        "id": "72",
+        "name": "xml",
+        "description": "xml"
+      },
+      {
+        "id": "73",
+        "name": "sql",
+        "description": "sql"
+      },
+      {
+        "id": "74",
+        "name": "swagger-yml",
+        "description": "swagger-yml"
+      }
+    ]
+  },
+  {
+    "group": "renren-fast",
+    "templates": [
+      {
+        "id": "91",
+        "name": "menu-sql",
+        "description": "menu-sql"
+      }
+    ]
+  },
+  {
+    "group": "riskproduct",
+    "templates": [
+      {
+        "id": "riskproduct_controller",
+        "name": "riskproduct_controller",
+        "description": "controllerController"
+      },
+      {
+        "id": "riskproduct_mapper",
+        "name": "riskproduct_mapper",
+        "description": "riskproduct_mapper"
+      },
+      {
+        "id": "riskproduct_dto",
+        "name": "riskproduct_dto",
+        "description": "riskproduct_dto"
+      },
+      {
+        "id": "riskproduct_vo",
+        "name": "riskproduct_vo",
+        "description": "riskproduct_vo"
+      },
+      {
+        "id": "riskproduct_mybatis_xml",
+        "name": "riskproduct_mybatis_xml",
+        "description": "riskproduct_mybatis_xml"
+      },
+      {
+        "id": "riskproduct_manager",
+        "name": "riskproduct_manager",
+        "description": "riskproduct_manager"
+      },
+      {
+        "id": "riskproduct_manager_impl",
+        "name": "riskproduct_manager_impl",
+        "description": "riskproduct_manager_impl"
+      }
+    ]
+  }
+,
+  {
+    "group": "",
+    "templates": [
+      {
+        "id": "generator-config-xml",
+        "name": "generator-config-xml",
+        "description": "generator-config-xml"
+      }
+    ]
+  }
+]
