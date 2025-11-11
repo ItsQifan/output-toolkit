@@ -5,12 +5,14 @@ import com.alibaba.fastjson2.JSON;
 import com.zhouchuanxiang.outputtoolkit.codegenerator.entity.ReturnT;
 import com.zhouchuanxiang.outputtoolkit.codegenerator.service.XmlGeneratorService;
 import lombok.extern.slf4j.Slf4j;
+import org.openjdk.jmh.profile.PausesProfiler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -57,6 +59,28 @@ public class XmlGeneratorController {
     public ReturnT generateCodeByXml(@RequestBody Map<String,String> paramMap) throws Exception {
         log.info("generateCodeByXml start，generatorConfigPath={}", paramMap);
         xmlGeneratorService.doGenerate(paramMap);
+        return ReturnT.ok();
+    }
+
+
+    /**
+     * @Author zhouchuanxiang
+     * @Description  生成xml配置文件，并执行
+     * @Date 13:57 2025/11/11
+     * @Param []
+     * @return
+     **/
+    @PostMapping("/generateXmlAndDoGenerate")
+    public ReturnT generateXmlAndDoGenerate() throws Exception {
+        log.info("generateXmlAndDoGenerate start启动");
+        String xmlpath = xmlGeneratorService.generateXml();
+        log.info("generateXmlAndDoGenerate end,xmlpath={}", xmlpath);
+        log.info("generateXmlAndDoGenerate JSONString:"+ JSON.toJSONString(xmlpath));
+
+        Map<String,String> paramMap=new HashMap<>();
+        paramMap.put("generatorConfigPath",xmlpath);
+        xmlGeneratorService.doGenerate(paramMap);
+        log.info("generateXmlAndDoGenerate end");
         return ReturnT.ok();
     }
 
