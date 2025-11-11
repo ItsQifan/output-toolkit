@@ -31,6 +31,7 @@
 
     <modules>
         <module>output-toolkit-codegenerator</module>
+        <module>output-toolkit-crypto</module>
     </modules>
 
     <properties>
@@ -40,6 +41,7 @@
         <fastjson2.version>2.0.58</fastjson2.version>
         <jackson.version>2.15.2</jackson.version>
         <jsqlparser.version>5.3</jsqlparser.version>
+        <zip4j.version>2.11.5</zip4j.version>
     </properties>
 
     <dependencies>
@@ -99,6 +101,14 @@
                 <artifactId>jsqlparser</artifactId>
                 <version>${jsqlparser.version}</version>
             </dependency>
+            <!-- https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j -->
+            <dependency>
+                <groupId>net.lingala.zip4j</groupId>
+                <artifactId>zip4j</artifactId>
+                <version>${zip4j.version}</version>
+            </dependency>
+
+
         </dependencies>
     </dependencyManagement>
 
