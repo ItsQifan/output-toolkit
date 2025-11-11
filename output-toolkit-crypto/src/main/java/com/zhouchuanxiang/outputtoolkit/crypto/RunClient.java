@@ -50,8 +50,8 @@ public class RunClient {
             throw new RuntimeException("密码不能为空");
         }
         long startTime = System.currentTimeMillis();
-        log.info("输入的解密密码是:{}",pwd);
-        pwd= AESUtil.decrypt(pwd);
+//        log.info("输入的解密密码是:{}",pwd);
+//        pwd= AESUtil.decrypt(pwd);
         ZipCryptoUtil.decryptZip(zipFile, afterEncryptFile, pwd);
         System.out.println("解密成功！执行完毕,执行时间："+(System.currentTimeMillis()- startTime) /1000 +"s");
     }
