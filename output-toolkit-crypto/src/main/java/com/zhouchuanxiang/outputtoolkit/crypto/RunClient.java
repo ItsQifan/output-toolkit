@@ -22,14 +22,14 @@ public class RunClient {
 
     public static void main(String[] args) throws Exception {
 
-        String sourceFile="D:\\0001新代码路径\\riskproduct\\tmp_code\\tmp_code.zip";
+        String sourceFile="D:\\海贼王动画大全.zip";
         //加密后的文件名字，  可不带后缀
-        String zipFile="D:\\test\\HttpToolkit-9.20.9.exe";
+        String zipFile="D:\\test\\Confessions.2010.JAPANESE.1080p.BluRay.x264.DTS-FGT.mkv";
 
         String afterEncryptFile="D:\\test\\yuan";
 
-//        encrypt(sourceFile, zipFile);
-        decrypt(zipFile, afterEncryptFile);
+        encrypt(sourceFile, zipFile);
+//        decrypt(zipFile, afterEncryptFile);
     }
 
     /**
