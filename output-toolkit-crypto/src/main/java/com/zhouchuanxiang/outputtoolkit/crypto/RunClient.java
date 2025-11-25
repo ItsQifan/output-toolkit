@@ -24,12 +24,12 @@ public class RunClient {
 
         String sourceFile="D:\\海贼王动画大全.zip";
         //加密后的文件名字，  可不带后缀
-        String zipFile="D:\\test\\Confessions.2010.JAPANESE.1080p.BluRay.x264.DTS-FGT.mkv";
+        String zipFile="E:\\qifan\\文件\\test1124.jar";
 
-        String afterEncryptFile="D:\\test\\yuan";
+        String afterEncryptFile="E:\\qifan\\文件";
 
-        encrypt(sourceFile, zipFile);
-//        decrypt(zipFile, afterEncryptFile);
+//        encrypt(sourceFile, zipFile);
+        decrypt(zipFile, afterEncryptFile);
     }
 
     /**
