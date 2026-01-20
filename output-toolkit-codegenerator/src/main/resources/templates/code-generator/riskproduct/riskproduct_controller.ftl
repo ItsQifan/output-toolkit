@@ -40,7 +40,7 @@ public class ${classInfo.className}Controller {
     **/
     @RequestMapping("/insert")
     @ControllerAnnotation("新增单条")
-    public Boolean insert(${classInfo.className}VO ${classInfo.className?uncap_first}){
+    public Boolean insert(@RequestBody ${classInfo.className}VO ${classInfo.className?uncap_first}){
         return ${classInfo.className?uncap_first}${managerSuffix}.insert(${classInfo.className?uncap_first});
     }
 
@@ -51,7 +51,7 @@ public class ${classInfo.className}Controller {
     **/
     @RequestMapping("/delete")
     @ControllerAnnotation("根据ID删除单条")
-    public Boolean delete(${classInfo.className}VO ${classInfo.className?uncap_first}){
+    public Boolean delete(@RequestBody ${classInfo.className}VO ${classInfo.className?uncap_first}){
         return ${classInfo.className?uncap_first}${managerSuffix}.delete(${classInfo.className?uncap_first});
     }
 

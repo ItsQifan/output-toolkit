@@ -37,7 +37,7 @@ private ${classInfo.className}${managerSuffix} ${classInfo.className?uncap_first
 @RequestMapping("/insert")
 @MethodAspectAnnotation()
 @ControllerAnnotation("新增单条")
-public Object insert(${classInfo.className} ${classInfo.className?uncap_first}){
+public Object insert(@RequestBody ${classInfo.className} ${classInfo.className?uncap_first}){
 return ${classInfo.className?uncap_first}Service.insert(${classInfo.className?uncap_first});
 }
 
@@ -57,7 +57,7 @@ return ${classInfo.className?uncap_first}Service.delete(id);
 * @date ${.now?string('yyyy/MM/dd')}
 **/
 @RequestMapping("/update")
-public Object update(${classInfo.className} ${classInfo.className?uncap_first}){
+public Object update(@RequestBody ${classInfo.className} ${classInfo.className?uncap_first}){
 return ${classInfo.className?uncap_first}Service.update(${classInfo.className?uncap_first});
 }
 
