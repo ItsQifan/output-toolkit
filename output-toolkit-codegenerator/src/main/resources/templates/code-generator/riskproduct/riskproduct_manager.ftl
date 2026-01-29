@@ -51,6 +51,6 @@ public interface ${classInfo.className}${managerSuffix} {
     * @param ${classInfo.className?uncap_first}
     * @return 分页结果
     */
-    List<${classInfo.className}VO> pageList(${classInfo.className}VO ${classInfo.className?uncap_first});
+    PageInfo<${classInfo.className}VO>  pageList(${classInfo.className}VO ${classInfo.className?uncap_first});
 
 }

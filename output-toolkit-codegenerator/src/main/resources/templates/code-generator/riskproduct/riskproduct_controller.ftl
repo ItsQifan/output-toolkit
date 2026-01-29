@@ -85,7 +85,7 @@ public class ${classInfo.className}Controller {
     @RequestMapping("/pageList")
     @ControllerAnnotation("分页查询")
     public PageInfo<${classInfo.className}VO> pageList(@RequestBody ${classInfo.className}VO ${classInfo.className?uncap_first}) {
-        return new PageInfo<>(${classInfo.className?uncap_first}${managerSuffix}.pageList(${classInfo.className?uncap_first}));
+        return ${classInfo.className?uncap_first}${managerSuffix}.pageList(${classInfo.className?uncap_first});
     }
 
 }

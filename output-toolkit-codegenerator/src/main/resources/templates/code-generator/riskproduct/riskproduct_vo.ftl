@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import lombok.Data;
+import ${classInfo.dtoPackageName}.${classInfo.className}${dtoSuffix};
 
 /**
  * @description  ${classInfo.className}${dtoSuffix} 的属性拓展VO   ${classInfo.classComment}   对应表：${classInfo.originTableName}
