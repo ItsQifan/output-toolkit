@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.zhouchuanxiang.outputtoolkit</groupId>
         <artifactId>output-toolkit</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
 
     <groupId>com.zhouchuanxiang.outputtoolkit.crypto</groupId>
