@@ -21,7 +21,7 @@ public class CodegeneratorTest {
 
     /**
      * @Author zhouchuanxiang
-     * @Description  【生成xml配置文件  并   生成代码】
+     * @Description  【生成xml配置文件  并   生成代码】测试
      * @Date 14:07 2025/11/11
      * @Param []
      * @return
