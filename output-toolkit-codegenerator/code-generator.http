@@ -1,0 +1,112 @@
+### 代码生成工具 - HTTP Client 测试文件
+### 在IDEA中直接点击左侧的绿色箭头即可运行
+### 使用前请确保服务已启动
+
+### ============================================
+### 🔍 如何调试（Debug）
+### ============================================
+### ⚠️ 重要：HTTP文件本身不能设置断点，需要在服务端代码中调试
+###
+### 📌 快速调试步骤（推荐）：
+###   1. 在 XmlGeneratorController.java 或 XmlGeneratorServiceImpl.java 中设置断点
+###   2. 以 Debug 模式启动应用（点击右上角的绿色虫子图标 🐛）
+###   3. 点击下面任意请求的绿色箭头 ▶️ 发送请求
+###   4. 应用会停在断点处，可以查看变量、单步调试（F8）、进入方法（F7）
+###
+### 💡 调试技巧：
+###   - 在方法入口设置断点，查看请求参数
+###   - 使用 Alt+F8 计算表达式
+###   - 使用条件断点：右键断点 -> More -> Condition
+###   - 查看详细调试指南：DEBUG-GUIDE.md
+###
+### ============================================
+
+### 环境变量配置（可以在IDEA右上角切换环境）
+### 点击右上角的 "No Environment" 可以切换环境
+### 或者右键点击请求 -> Modify Request -> Environment
+
+### 本地环境（默认）
+@host = localhost
+@port = 8223
+@baseUrl = http://{{host}}:{{port}}/outputtoolkit/codegen/xmlGen
+
+### 如果需要切换环境，取消下面的注释并修改
+# @host = 192.168.1.100
+# @port = 8223
+
+### ============================================
+### 一键生成（推荐）- 最常用
+### 从配置的SQL文件读取建表语句，生成XML配置并执行代码生成
+### ============================================
+POST {{baseUrl}}/generateXmlAndDoGenerate
+Content-Type: application/json
+
+### ============================================
+### 分步执行方式1：只生成XML配置文件
+### ============================================
+POST {{baseUrl}}/generateXml
+Content-Type: application/json
+
+### ============================================
+### 分步执行方式2：根据XML配置文件生成代码
+### 需要先执行上面的generateXml获取xmlpath，然后替换下面的路径
+### ============================================
+POST {{baseUrl}}/doGenerate
+Content-Type: application/json
+
+{
+  "generatorConfigPath": "E:\\CODE_GENE\\riskproduct\\xml\\generatorConfig2025_01_30_14_30_00.xml"
+}
+
+### ============================================
+### 常用建表SQL示例（复制到create-sql.sql文件中使用）
+### ============================================
+
+### 示例1：基础业务表
+# CREATE TABLE `t_p_user_info` (
+#   `id` varchar(32) NOT NULL COMMENT '用户ID',
+#   `user_name` varchar(100) NOT NULL COMMENT '用户名',
+#   `phone` varchar(20) COMMENT '手机号',
+#   `email` varchar(100) COMMENT '邮箱',
+#   `status` varchar(32) DEFAULT 'active' COMMENT '状态：active-激活，inactive-未激活',
+#   `created_at` datetime DEFAULT NULL COMMENT '创建时间',
+#   `created_by` varchar(32) DEFAULT NULL COMMENT '创建人',
+#   `updated_at` datetime DEFAULT NULL COMMENT '更新时间',
+#   `updated_by` varchar(32) DEFAULT NULL COMMENT '更新人',
+#   PRIMARY KEY (`id`)
+# ) COMMENT = '用户信息表';
+
+
+
+
+### ============================================
+### 快速使用指南
+### ============================================
+### 【最常用流程】
+### 1. 将建表SQL语句写入：src/main/resources/create-sql.sql
+### 2. 点击上面的 "一键生成" 接口左侧的绿色箭头 ▶️ 运行
+### 3. 查看控制台日志，找到生成的代码路径
+### 4. 生成的代码在：E:\CODE_GENE\riskproduct\tmp_useful_code\
+###
+### 【批量生成 - 已优化】
+### - ✅ 可以一次放多个CREATE TABLE语句，系统会自动批量处理
+### - ✅ 单个表失败不会影响其他表的生成
+### - ✅ 生成完成后会显示详细统计信息（成功/失败/跳过数量）
+### - ✅ 每个表会生成：Controller、Mapper、DTO、VO、Manager、ManagerImpl、MyBatis XML
+### - ✅ 支持SQL注释（-- 和 #），会自动过滤
+### - ✅ 智能识别表名前缀（支持多种格式：t_p_xxx、r_cb_xxx等）
+###
+### 【表名处理】
+### - 表名前缀会自动识别并移除（如：t_p_xxx -> xxx）
+### - 类名会自动转换为驼峰命名（如：user_info -> UserInfo）
+###
+### 【快捷键】
+### - Ctrl+Enter：运行当前请求
+### - Ctrl+Shift+Enter：运行当前请求并显示响应
+### - 双击请求名称可以重命名
+###
+### 【调试技巧】
+### - 在Controller/Service中设置断点后，运行HTTP请求会自动停在断点处
+### - 可以在IDEA的Debug窗口查看请求参数、响应结果
+### - 使用 Evaluate Expression (Alt+F8) 可以计算表达式
+### ============================================

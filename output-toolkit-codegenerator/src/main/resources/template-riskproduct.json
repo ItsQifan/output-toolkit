@@ -111,12 +111,8 @@
         "id": "riskproduct_manager",
         "name": "riskproduct_manager",
         "description": "riskproduct_manager"
-      },
-      {
-        "id": "riskproduct_manager_impl",
-        "name": "riskproduct_manager_impl",
-        "description": "riskproduct_manager_impl"
       }
+
     ]
   }
 ,

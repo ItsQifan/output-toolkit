@@ -197,7 +197,7 @@ public class XmlGeneratorServiceImpl implements XmlGeneratorService {
     /**
      * @return
      * @Author zhouchuanxiang
-     * @Description 生成xml配置文件
+     * @Description 生成xml配置文件，支持批量处理多个建表语句
      * @Date 14:30 2025/9/29
      * @Param []
      **/
@@ -207,42 +207,80 @@ public class XmlGeneratorServiceImpl implements XmlGeneratorService {
         String content = null;
         try {
             content = new String(Files.readAllBytes(Paths.get(sqlAbsolutePath)), StandardCharsets.UTF_8);
-            content = content.replaceAll("CREATE TABLE", "create table");
+            // 统一转换为小写，便于正则匹配
+            content = content.replaceAll("(?i)CREATE TABLE", "create table");
+            // 移除SQL注释（-- 和 # 开头的注释）
+            content = content.replaceAll("(?m)^\\s*--.*$", "");
+            content = content.replaceAll("(?m)^\\s*#.*$", "");
+            // 移除多余的空行
+            content = content.replaceAll("(?m)^\\s*$[\r\n]+", "");
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.error("读取SQL文件失败: {}", sqlAbsolutePath, e);
+            throw new RuntimeException("读取SQL文件失败: " + sqlAbsolutePath, e);
         }
 
-        // 使用正则表达式匹配CREATE TABLE语句
-//        Pattern pattern = Pattern.compile("create table\\s+`([^`]+)`\\s*\\([\\s\\S]*?\\)[^;]+;", Pattern.CASE_INSENSITIVE);
-        Pattern pattern = Pattern.compile("create table\\s+`([^`]+)`\\s*\\([\\s\\S]*?\\)[^;]*'\\s*;", Pattern.CASE_INSENSITIVE);
+        // 优化后的正则表达式：匹配CREATE TABLE语句
+        // 支持多种格式：
+        //   - CREATE TABLE `table_name` (...) COMMENT = '...';
+        //   - CREATE TABLE `table_name` (...);
+        //   - CREATE TABLE `table_name` (...) ENGINE=InnoDB COMMENT='...';
+        // 注意：使用非贪婪匹配，确保能正确分割多个CREATE TABLE语句
+        // 匹配规则：create table + 表名 + (字段定义) + 可选的表选项 + ;
+        // 关键：匹配到分号为止，支持 COMMENT = '...' 等表选项
+        Pattern pattern = Pattern.compile(
+            "create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?[`'\"]([^`'\"]+)[`'\"][\\s\\S]*?\\)[^;]*;",
+            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL
+        );
         Matcher matcher = pattern.matcher(content);
-
-        while (matcher.find()) {
-            String createTableSql = matcher.group(0).trim();
-            TableConfig tableConfig = new TableConfig();
-            tableConfig.setSql(createTableSql);
-            tableConfig.setDtoPackageName(dtoPackageName);
-            tableConfig.setVoPackageName(voPackageName);
-            tableConfig.setMapperPackageName(mapperPackageName);
-            tableConfig.setManagerPackageName(managerPackageName);
-            tableConfig.setControllerPackageName(controllerPackageName);
-            tableConfig.setDtoSuffix(dtoSuffix);
-            tableConfig.setMapperSuffix(mapperSuffix);
-            tableConfig.setManagerSuffix(managerSuffix);
-
-            createTableSql.indexOf("`");
-            /**
-             * 建表语句为：CREATE TABLE `r_cb_cm_base` ( ...     截取结果r_cb_ : 到第二个下划线
-             */
-            String substring = createTableSql.substring(createTableSql.indexOf("`") + 1, createTableSql.indexOf("_", createTableSql.indexOf("_") + 1) + 1);
-
-            /**
-             * 建表语句为：CREATE TABLE `r_cb_cm_base` ( ...     截取结果r_ : 到第一个下划线
-             */
-//            String substring = sql.substring(sql.indexOf("`")+1, sql.indexOf("_")+1);
-            tableConfig.setSqlIgnorePrefix(substring);
-            tableConfigs.add(tableConfig);
+        
+        log.debug("开始匹配建表语句，SQL内容长度: {}", content.length());
+        if (log.isDebugEnabled()) {
+            log.debug("SQL内容预览（前500字符）: {}", content.substring(0, Math.min(500, content.length())));
         }
+
+        int tableCount = 0;
+        while (matcher.find()) {
+            tableCount++;
+            String createTableSql = matcher.group(0).trim();
+            log.debug("匹配到第{}个建表语句，长度: {}，预览: {}", 
+                tableCount, createTableSql.length(), 
+                createTableSql.substring(0, Math.min(100, createTableSql.length())) + "...");
+            
+            try {
+                TableConfig tableConfig = new TableConfig();
+                tableConfig.setSql(createTableSql);
+                tableConfig.setDtoPackageName(dtoPackageName);
+                tableConfig.setVoPackageName(voPackageName);
+                tableConfig.setMapperPackageName(mapperPackageName);
+                tableConfig.setManagerPackageName(managerPackageName);
+                tableConfig.setControllerPackageName(controllerPackageName);
+                tableConfig.setDtoSuffix(dtoSuffix);
+                tableConfig.setMapperSuffix(mapperSuffix);
+                tableConfig.setManagerSuffix(managerSuffix);
+
+                // 提取表名
+                String tableName = extractTableName(createTableSql);
+                log.debug("提取到表名: {}", tableName);
+                
+                // 智能提取表名前缀（支持多种情况）
+                String prefix = extractTablePrefix(tableName);
+                tableConfig.setSqlIgnorePrefix(prefix);
+                
+                log.info("【批量生成】第{}个表: {} (前缀: {})", tableCount, tableName, prefix);
+                tableConfigs.add(tableConfig);
+            } catch (Exception e) {
+                log.error("【批量生成】解析第{}个建表语句失败，跳过该表", tableCount, e);
+                // 继续处理下一个表，不中断整个流程
+            }
+        }
+
+        if (tableConfigs.isEmpty()) {
+            log.warn("【批量生成】未找到任何建表语句，请检查SQL文件格式");
+            throw new RuntimeException("未找到任何建表语句，请检查SQL文件格式是否正确");
+        }
+
+        log.info("【批量生成】共解析到 {} 个建表语句，准备生成XML配置", tableConfigs.size());
+
         Map<String, Object> paramInfoMap = new HashMap<>();
         paramInfoMap.put("tableConfigs", tableConfigs);
 
@@ -251,16 +289,66 @@ public class XmlGeneratorServiceImpl implements XmlGeneratorService {
             xmlContent = FreemarkerUtil.processString("generator-config-xml.ftl", paramInfoMap);
         } catch (Exception e) {
             log.error("生成xml配置文件异常", e);
-            throw new RuntimeException(e);
+            throw new RuntimeException("生成xml配置文件异常", e);
         }
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-
         String filePath = configXmlAbsolutePath + "\\xml\\" + "generatorConfig" + sdf.format(new Date()) + ".xml";
-        log.info("xml file path:{}", filePath);
+        log.info("【批量生成】XML配置文件路径: {}", filePath);
 
         boolean b = templateTool.writeContentToFile(xmlContent, filePath);
+        if (!b) {
+            throw new RuntimeException("写入XML配置文件失败: " + filePath);
+        }
+        
+        log.info("【批量生成】XML配置文件生成成功，包含 {} 个表的配置", tableConfigs.size());
         return filePath;
+    }
+
+    /**
+     * 提取表名
+     */
+    private String extractTableName(String createTableSql) {
+        // 匹配 CREATE TABLE `table_name` 或 CREATE TABLE 'table_name' 或 CREATE TABLE "table_name"
+        Pattern tableNamePattern = Pattern.compile(
+            "create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?[`'\"]([^`'\"]+)[`'\"]",
+            Pattern.CASE_INSENSITIVE
+        );
+        Matcher matcher = tableNamePattern.matcher(createTableSql);
+        if (matcher.find()) {
+            return matcher.group(1).trim();
+        }
+        throw new RuntimeException("无法从建表语句中提取表名: " + createTableSql.substring(0, Math.min(100, createTableSql.length())));
+    }
+
+    /**
+     * 智能提取表名前缀
+     * 支持多种情况：
+     * - t_p_user_info -> t_p_
+     * - r_cb_cm_base -> r_cb_
+     * - user_info -> "" (无前缀)
+     * - t_user -> t_ (只有一个下划线)
+     */
+    private String extractTablePrefix(String tableName) {
+        if (StringUtils.isBlank(tableName)) {
+            return "";
+        }
+        
+        // 查找第二个下划线的位置
+        int firstUnderscoreIndex = tableName.indexOf("_");
+        if (firstUnderscoreIndex == -1) {
+            // 没有下划线，返回空前缀
+            return "";
+        }
+        
+        int secondUnderscoreIndex = tableName.indexOf("_", firstUnderscoreIndex + 1);
+        if (secondUnderscoreIndex == -1) {
+            // 只有一个下划线，返回到第一个下划线+1
+            return tableName.substring(0, firstUnderscoreIndex + 1);
+        }
+        
+        // 有两个或更多下划线，返回到第二个下划线+1
+        return tableName.substring(0, secondUnderscoreIndex + 1);
     }
 
     /**
