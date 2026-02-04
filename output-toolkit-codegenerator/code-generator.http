@@ -41,6 +41,17 @@
 POST {{baseUrl}}/generateXmlAndDoGenerate
 Content-Type: application/json
 
+
+
+### ============================================
+### 【增量更新】
+### ============================================
+POST {{baseUrl}}/generateXmlAndIncrementalUpdate
+Content-Type: application/json
+
+
+
+
 ### ============================================
 ### 分步执行方式1：只生成XML配置文件
 ### ============================================

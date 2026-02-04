@@ -33,4 +33,14 @@ public interface XmlGeneratorService {
      * @return
      **/
     String generateXml();
+
+    /**
+     * @Author zhouchuanxiang
+     * @Description  增量更新代码文件（支持字段新增/删除）
+     * @Date 2026-02-04
+     * @Param [xmlConfigPath] XML配置文件路径
+     * @return 更新结果描述
+     **/
+    String incrementalUpdate(String xmlConfigPath) throws Exception;
+
 }

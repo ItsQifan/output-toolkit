@@ -5,6 +5,7 @@ import com.zhouchuanxiang.outputtoolkit.codegenerator.entity.ClassInfo;
 import com.zhouchuanxiang.outputtoolkit.codegenerator.entity.FieldInfo;
 import com.zhouchuanxiang.outputtoolkit.codegenerator.entity.NonCaseString;
 import com.zhouchuanxiang.outputtoolkit.codegenerator.enums.ModelEnum;
+import com.zhouchuanxiang.outputtoolkit.codegenerator.service.IncrementalUpdateService;
 import com.zhouchuanxiang.outputtoolkit.codegenerator.service.XmlGeneratorService;
 import com.zhouchuanxiang.outputtoolkit.codegenerator.tool.TemplateTool;
 import com.zhouchuanxiang.outputtoolkit.codegenerator.util.*;
@@ -97,6 +98,9 @@ public class XmlGeneratorServiceImpl implements XmlGeneratorService {
 
     @Autowired
     private TemplateTool templateTool;
+
+    @Autowired
+    private IncrementalUpdateService incrementalUpdateService;
 
     /**
      * @return
@@ -358,7 +362,7 @@ public class XmlGeneratorServiceImpl implements XmlGeneratorService {
      * @Date 17:30 2025/9/28
      * @Param [tableConfig, classInfoList]
      **/
-    private ClassInfo genCodeBySql(TableConfig tableConfig) {
+    public ClassInfo genCodeBySql(TableConfig tableConfig) {
 
         //获取
         NonCaseString tableSql = this.getTableSql(tableConfig);
@@ -549,10 +553,10 @@ public class XmlGeneratorServiceImpl implements XmlGeneratorService {
         codeJavaInfo.setTableComment(classComment);
 
 //        codeJavaInfo.setClassNameWithSuffix(codeJavaInfo.getClassName() + tableConfig.getDtoSuffix());
-        codeJavaInfo.setVoPackageName(tableConfig.getVoPackageName() + "." + codeJavaInfo.getClassName()+"VO");
-        codeJavaInfo.setDtoPackageName(tableConfig.getDtoPackageName() + "." + codeJavaInfo.getClassName()+tableConfig.getDtoSuffix());
-        codeJavaInfo.setMapperPackageName(tableConfig.getMapperPackageName() + "." + codeJavaInfo.getClassName());
-        codeJavaInfo.setControllerPackageName(tableConfig.getControllerPackageName() );
+        codeJavaInfo.setVoPackageName(tableConfig.getVoPackageName());
+        codeJavaInfo.setDtoPackageName(tableConfig.getDtoPackageName());
+        codeJavaInfo.setMapperPackageName(tableConfig.getMapperPackageName());
+        codeJavaInfo.setControllerPackageName(tableConfig.getControllerPackageName());
 
 
         return codeJavaInfo;
@@ -690,6 +694,18 @@ public class XmlGeneratorServiceImpl implements XmlGeneratorService {
         inputStream.close();
         //log.info(JSON.toJSONString(templateCpnfig));
         return templateConfig;
+    }
+
+    /**
+     * @return
+     * @Author zhouchuanxiang
+     * @Description 增量更新代码文件（支持字段新增/删除）
+     * @Date 2026-02-04
+     * @Param [xmlConfigPath] XML配置文件路径
+     **/
+    @Override
+    public String incrementalUpdate(String xmlConfigPath) throws Exception {
+        return incrementalUpdateService.incrementalUpdate(xmlConfigPath);
     }
 
     /**
