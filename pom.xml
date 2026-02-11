@@ -32,6 +32,7 @@
     <modules>
         <module>output-toolkit-codegenerator</module>
         <module>output-toolkit-crypto</module>
+        <module>output-toolkit-justopen</module>
     </modules>
 
     <properties>
