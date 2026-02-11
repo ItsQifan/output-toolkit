@@ -218,7 +218,7 @@ public class LauncherMenuWindow {
         
         // 分组名称
         Label groupName = new Label(group.getName());
-        groupName.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;");
+        groupName.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;");
         card.getChildren().add(groupName);
         
         // 程序列表
@@ -226,7 +226,7 @@ public class LauncherMenuWindow {
             VBox itemsList = new VBox(3);
             int count = 0;
             for (SoftwareItem item : group.getItems()) {
-                if (count >= 5) { // 最多显示5个
+                if (count >= 8) { // 最多显示8个
                     Label moreLabel = new Label("...");
                     moreLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #999999;");
                     itemsList.getChildren().add(moreLabel);
@@ -272,7 +272,7 @@ public class LauncherMenuWindow {
         
         // 分组名称
         Label groupName = new Label(group.getName());
-        groupName.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;");
+        groupName.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;");
         card.getChildren().add(groupName);
         
         // 网址列表
@@ -280,7 +280,7 @@ public class LauncherMenuWindow {
             VBox itemsList = new VBox(3);
             int count = 0;
             for (UrlItem item : group.getItems()) {
-                if (count >= 5) { // 最多显示5个
+                if (count >= 8) { // 最多显示8个
                     Label moreLabel = new Label("...");
                     moreLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #999999;");
                     itemsList.getChildren().add(moreLabel);
