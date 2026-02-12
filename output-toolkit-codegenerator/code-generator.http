@@ -66,7 +66,7 @@ POST {{baseUrl}}/doGenerate
 Content-Type: application/json
 
 {
-  "generatorConfigPath": "E:\\CODE_GENE\\riskproduct\\xml\\generatorConfig2025_01_30_14_30_00.xml"
+  "generatorConfigPath": "E:\\CODE_GENE\\test\\xml\\generatorConfig2026_02_12_16_53_43.xml"
 }
 
 ### ============================================

@@ -190,6 +190,9 @@ public class XmlGeneratorServiceImpl implements XmlGeneratorService {
                 }else if (stringStringEntry.getKey().contains(ftlPrefixName + "_manager_impl")) {
                     String fileName = configXmlAbsolutePath + "\\tmp_useful_code\\" + classInfo.getClassName() + tableConfig.getManagerSuffix() + "Impl.java";
                     templateTool.writeContentToFile(stringStringEntry.getValue(), fileName);
+                }else if (stringStringEntry.getKey().contains(ftlPrefixName + "_test")) {
+                    String fileName = configXmlAbsolutePath + "\\tmp_useful_code\\" + classInfo.getClassName()  + "ControllerTest.java";
+                    templateTool.writeContentToFile(stringStringEntry.getValue(), fileName);
                 }
             }
         }
