@@ -2,6 +2,7 @@ package com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.mcp;
 
 import com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.db.QueryResult;
 import com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.db.QueryResult.QueryType;
+import com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.security.IdentifierValidator;
 import com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.service.QueryExecutionService;
 import com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.service.SchemaInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +29,9 @@ import java.util.List;
  * 完整类结构：
  * <ul>
  *   <li>McpToolDefinitions —— 工具定义类，包含 3 个 @Tool 方法</li>
- *   <li>QueryExecutionService —— SQL 执行服务，被 executeSql 调用</li>
+ *   <li>QueryExecutionService —— SQL 执行服务，被 executeSql / getTableSample 调用</li>
  *   <li>SchemaInfoService —— Schema 查询服务，被 getSchemaInfo 调用</li>
+ *   <li>IdentifierValidator —— 标识符校验，被 getSchemaInfo / getTableSample 调用</li>
  * </ul>
  *
  * @author qifan
@@ -41,11 +43,14 @@ public class McpToolDefinitions {
 
     private final QueryExecutionService queryExecutionService;
     private final SchemaInfoService schemaInfoService;
+    private final IdentifierValidator identifierValidator;
 
     public McpToolDefinitions(QueryExecutionService queryExecutionService,
-                              SchemaInfoService schemaInfoService) {
+                              SchemaInfoService schemaInfoService,
+                              IdentifierValidator identifierValidator) {
         this.queryExecutionService = queryExecutionService;
         this.schemaInfoService = schemaInfoService;
+        this.identifierValidator = identifierValidator;
     }
 
     /**
@@ -74,7 +79,7 @@ public class McpToolDefinitions {
     /**
      * 获取表的 Schema 信息（列名、类型、可空、默认值、注释）
      * <p>
-     * 支持 database.table 跨库格式。
+     * 查询 information_schema.COLUMNS，支持 database.table 跨库格式。
      * 不传 tableName 时返回所有表的列信息。
      * </p>
      *
@@ -85,9 +90,20 @@ public class McpToolDefinitions {
     public String getSchemaInfo(
             @ToolParam(description = "表名（可选），支持 database.table 跨库格式，不传则查询所有表")
             String tableName) {
-        // TODO Phase 4: 调用 SchemaInfoService.getSchemaInfo(tableName) 并格式化返回
-        log.info("Schema查询_收到 get_schema_info 请求, tableName={}", tableName);
-        return "Not implemented yet — Phase 4 实现";
+        try {
+            log.info("Schema查询_收到 get_schema_info 请求, tableName={}", tableName);
+
+            // 如果指定了表名，先校验标识符合法性（防注入）
+            if (tableName != null && !tableName.isEmpty()) {
+                identifierValidator.parseTableArg(tableName);
+            }
+
+            QueryResult result = schemaInfoService.getSchemaInfo(tableName);
+            return formatQueryResult(result);
+        } catch (Exception e) {
+            log.error("Schema查询_查询失败, tableName={}", tableName, e);
+            return "Error calling tool get_schema_info: " + e.getMessage();
+        }
     }
 
     /**
@@ -104,9 +120,33 @@ public class McpToolDefinitions {
     public String getTableSample(
             @ToolParam(description = "表名（必填），支持 database.table 跨库格式") String tableName,
             @ToolParam(description = "返回行数，默认 5，最大 20") Integer limit) {
-        // TODO Phase 4: 调用 QueryExecutionService 执行 SELECT * LIMIT 查询
-        log.info("样本查询_收到 get_table_sample 请求, tableName={}, limit={}", tableName, limit);
-        return "Not implemented yet — Phase 4 实现";
+        try {
+            // 参数校验与规范化
+            if (tableName == null || tableName.isEmpty()) {
+                return "Error calling tool get_table_sample: table_name is required";
+            }
+
+            // 限制 limit 范围：默认 5，最大 20
+            int actualLimit = (limit == null || limit <= 0) ? 5 : Math.min(limit, 20);
+
+            // 校验标识符合法性（防注入）
+            // parseTableArg 会校验 database 和 table 两部分
+            String[] parts = identifierValidator.parseTableArg(tableName);
+            String fullTableName = parts[0] != null
+                    ? "`" + parts[0] + "`.`" + parts[1] + "`"
+                    : "`" + parts[1] + "`";
+
+            // 生成查询 SQL：SELECT * FROM {table} LIMIT {n}
+            String sql = "SELECT * FROM " + fullTableName + " LIMIT " + actualLimit;
+
+            log.info("样本查询_执行SQL, tableName={}, limit={}, sql={}", tableName, actualLimit, sql);
+
+            QueryResult result = queryExecutionService.execute(sql);
+            return formatQueryResult(result);
+        } catch (Exception e) {
+            log.error("样本查询_查询失败, tableName={}, limit={}", tableName, limit, e);
+            return "Error calling tool get_table_sample: " + e.getMessage();
+        }
     }
 
     /**
@@ -154,7 +194,7 @@ public class McpToolDefinitions {
                     if (i > 0) {
                         sb.append(",");
                     }
-                    // CSV 值中包含逗号或换行时用引号包裹
+                    // CSV 值中包含逗号、换行或引号时用引号包裹
                     String val = row[i] != null ? row[i] : "";
                     if (val.contains(",") || val.contains("\n") || val.contains("\"")) {
                         sb.append("\"").append(val.replace("\"", "\"\"")).append("\"");
