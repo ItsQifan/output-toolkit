@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Slf4j
 @Configuration
-@ConditionalOnProperty(name = "mcp.transport", havingValue = "sse")
+@ConditionalOnProperty(name = "spring.ai.mcp.server.protocol", havingValue = "SSE")
 public class SseModeConfig {
 
     // Phase 1: 骨架占位，Phase 6 完善 SSE 传输配置

@@ -6,8 +6,9 @@ import com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.security.IdentifierValidator;
 import com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.service.QueryExecutionService;
 import com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.service.SchemaInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.springaicommunity.mcp.annotation.McpTool;
+import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -63,9 +64,9 @@ public class McpToolDefinitions {
      * @param query 待执行的 SQL 语句
      * @return 格式化后的查询结果文本
      */
-    @Tool(description = "执行 SQL 语句。支持 SELECT / INSERT / UPDATE / DELETE / SHOW / DESCRIBE 等。仅支持单条语句，不支持多语句执行。")
+    @McpTool(description = "执行 SQL 语句。支持 SELECT / INSERT / UPDATE / DELETE / SHOW / DESCRIBE 等。仅支持单条语句，不支持多语句执行。")
     public String executeSql(
-            @ToolParam(description = "待执行的 SQL 语句，仅支持单条 SQL") String query) {
+            @McpToolParam(description = "待执行的 SQL 语句，仅支持单条 SQL") String query) {
         try {
             log.info("SQL执行_收到 execute_sql 请求, sql={}", query);
             QueryResult result = queryExecutionService.execute(query);
@@ -86,9 +87,9 @@ public class McpToolDefinitions {
      * @param tableName 表名（可选），支持 database.table 格式
      * @return Schema 信息文本
      */
-    @Tool(description = "获取表的列信息（列名、数据类型、是否可空、默认值、注释）。不传表名则返回所有表的列信息。支持 database.table 跨库格式。")
+    @McpTool(description = "获取表的列信息（列名、数据类型、是否可空、默认值、注释）。不传表名则返回所有表的列信息。支持 database.table 跨库格式。")
     public String getSchemaInfo(
-            @ToolParam(description = "表名（可选），支持 database.table 跨库格式，不传则查询所有表")
+            @McpToolParam(description = "表名（可选），支持 database.table 跨库格式，不传则查询所有表")
             String tableName) {
         try {
             log.info("Schema查询_收到 get_schema_info 请求, tableName={}", tableName);
@@ -116,10 +117,10 @@ public class McpToolDefinitions {
      * @param limit     返回行数，默认 5，最大 20
      * @return CSV 格式的样本数据
      */
-    @Tool(description = "获取表的样本数据（前 N 行）。执行 SELECT * FROM {table} LIMIT {n}。limit 默认 5，最大 20。支持 database.table 跨库格式。")
+    @McpTool(description = "获取表的样本数据（前 N 行）。执行 SELECT * FROM {table} LIMIT {n}。limit 默认 5，最大 20。支持 database.table 跨库格式。")
     public String getTableSample(
-            @ToolParam(description = "表名（必填），支持 database.table 跨库格式") String tableName,
-            @ToolParam(description = "返回行数，默认 5，最大 20") Integer limit) {
+            @McpToolParam(description = "表名（必填），支持 database.table 跨库格式") String tableName,
+            @McpToolParam(description = "返回行数，默认 5，最大 20") Integer limit) {
         try {
             // 参数校验与规范化
             if (tableName == null || tableName.isEmpty()) {

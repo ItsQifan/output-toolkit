@@ -27,8 +27,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
  * @author qifan
  * @since 2026-07-09
  */
-@SpringBootApplication
 @EnableConfigurationProperties
+@SpringBootApplication(scanBasePackages = "com.zhouchuanxiang.outputtoolkit.mcp.nl2sql")
 public class OutputToolkitMcpNl2sqlApplication {
 
     public static void main(String[] args) {

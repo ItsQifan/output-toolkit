@@ -2,13 +2,6 @@
 # MySQL MCP Server 配置文件
 # ==========================================
 
-# MCP 传输模式配置
-mcp:
-  transport: stdio          # 传输模式：stdio（标准输入输出）/ sse（HTTP SSE）
-  sse-port: 8000            # SSE 模式端口
-  sse-message-endpoint: /messages/
-  sse-allowed-hosts: localhost,127.0.0.1
-
 # MySQL 数据库连接配置
 mysql:
   host: localhost
@@ -27,12 +20,28 @@ mysql:
     port: 22
     connect-timeout: 10
 
-# Spring 配置
+# Spring + MCP 配置
 spring:
   application:
-    name: mysql-mcp-server
+    name: mcp-nl2sql
   main:
-    banner-mode: off         # 关闭 Spring Boot banner（STDIO 模式下避免干扰）
+    banner-mode: off         # 关闭 Spring Boot banner（避免污染 stdout）
+  ai:
+    mcp:
+      server:
+        name: mcp-nl2sql       # MCP 服务器名称
+        protocol: SSE                # 协议类型：SSE / STREAMABLE / STATELESS
+        stdio: true                  # 关键：启用 STDIO 传输模式（默认 false，不启用则 Claude Code 无法连接）
+        enabled: true                # 启用 MCP 服务器
+        capabilities:
+          tool: true                 # 工具能力（execute_sql / get_schema_info / get_table_sample）
+          resource: true             # 资源能力（list / read table resources）
+          prompt: true               # 提示能力
+        # 功能开关
+        resource-change-notification:
+          enabled: true
+        prompt-change-notification:
+          enabled: true
 
 # 日志配置
 logging:

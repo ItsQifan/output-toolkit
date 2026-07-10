@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Slf4j
 @Configuration
-@ConditionalOnProperty(name = "mcp.transport", havingValue = "stdio", matchIfMissing = true)
+@ConditionalOnProperty(name = "spring.ai.mcp.server.stdio", havingValue = "true", matchIfMissing = false)
 public class StdioModeConfig {
 
     // Phase 1: Spring AI 自动处理 STDIO 模式，无需额外配置
