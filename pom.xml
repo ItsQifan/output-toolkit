@@ -33,6 +33,7 @@
         <module>output-toolkit-codegenerator</module>
         <module>output-toolkit-crypto</module>
         <module>output-toolkit-justopen</module>
+        <module>output-toolkit-mcp-nl2sql</module>
     </modules>
 
     <properties>

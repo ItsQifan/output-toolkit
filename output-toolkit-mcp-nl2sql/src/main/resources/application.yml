@@ -1,0 +1,41 @@
+# ==========================================
+# MySQL MCP Server 配置文件
+# ==========================================
+
+# MCP 传输模式配置
+mcp:
+  transport: stdio          # 传输模式：stdio（标准输入输出）/ sse（HTTP SSE）
+  sse-port: 8000            # SSE 模式端口
+  sse-message-endpoint: /messages/
+  sse-allowed-hosts: localhost,127.0.0.1
+
+# MySQL 数据库连接配置
+mysql:
+  host: localhost
+  port: 3306
+  user: root
+  password: ${MYSQL_PASSWORD:}
+  database: ${MYSQL_DATABASE:}   # 为空则使用多库模式
+  charset: utf8mb4
+  connect-timeout: 10
+  # SSL 配置
+  ssl:
+    mode: DISABLED           # DISABLED / REQUIRED / VERIFY_CA / VERIFY_IDENTITY
+  # SSH 隧道配置
+  ssh:
+    enabled: false
+    port: 22
+    connect-timeout: 10
+
+# Spring 配置
+spring:
+  application:
+    name: mysql-mcp-server
+  main:
+    banner-mode: off         # 关闭 Spring Boot banner（STDIO 模式下避免干扰）
+
+# 日志配置
+logging:
+  level:
+    root: WARN
+    com.zhouchuanxiang.outputtoolkit: INFO
