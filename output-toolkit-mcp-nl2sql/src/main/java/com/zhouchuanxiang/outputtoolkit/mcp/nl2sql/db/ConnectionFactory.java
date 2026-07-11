@@ -87,6 +87,9 @@ public class ConnectionFactory {
         // 连接池基础配置
         hikariConfig.setMinimumIdle(1);
         hikariConfig.setMaximumPoolSize(10);
+        // 启动时不验证连接（延迟到首次 SQL 调用时再建立连接）
+        // SSE 模式下数据库凭证由 Claude Desktop 通过 env 传入，启动阶段可能不可用
+        hikariConfig.setInitializationFailTimeout(-1);
         hikariConfig.setConnectionTimeout(dbConfig.getConnectTimeout() * 1000L);
         hikariConfig.setIdleTimeout(600000);       // 空闲连接 10 分钟后释放
         hikariConfig.setMaxLifetime(1800000);      // 连接最大存活 30 分钟
@@ -148,6 +151,9 @@ public class ConnectionFactory {
 
         // 构建查询参数
         List<String> params = new ArrayList<>();
+
+        // MySQL 8.0+ caching_sha2_password 认证需要允许公钥检索
+        params.add("allowPublicKeyRetrieval=true");
 
         // SSL 模式映射（MySQL Connector/J 8.x 使用 sslMode 属性）
         String sslMode = dbConfig.getSsl().getMode();

@@ -8,15 +8,15 @@
 #
 # 切换方式：修改 spring.ai.mcp.server 下的配置
 
-# MySQL 数据库连接配置
+# MySQL 数据库连接配置（通过环境变量覆盖，默认值仅作为 fallback）
 mysql:
-  host: localhost
-  port: 3306
-  user: root
-  password: root
-  database: seata_db            # 为空则使用多库模式
-  charset: utf8mb4
-  connect-timeout: 10
+  host: ${MYSQL_HOST:localhost}
+  port: ${MYSQL_PORT:3306}
+  user: ${MYSQL_USER:root}
+  password: ${MYSQL_PASSWORD:1}
+  database: ${MYSQL_DATABASE:}   # 为空则多库模式
+  charset: ${MYSQL_CHARSET:utf8mb4}
+  connect-timeout: ${MYSQL_CONNECT_TIMEOUT:10}
   ssl:
     mode: DISABLED               # DISABLED / REQUIRED / VERIFY_CA / VERIFY_IDENTITY
   ssh:
@@ -63,6 +63,7 @@ server:
 
 mcp:
    sse-allowed-hosts: localhost,127.0.0.1  # DNS 重绑定白名单
+# ==========================================
 
 # 日志配置
 logging:

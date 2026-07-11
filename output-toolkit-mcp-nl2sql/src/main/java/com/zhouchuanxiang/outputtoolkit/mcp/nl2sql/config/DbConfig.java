@@ -1,10 +1,8 @@
 package com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.config;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-import org.springframework.validation.annotation.Validated;
 
 /**
  * 数据库连接配置
@@ -18,7 +16,6 @@ import org.springframework.validation.annotation.Validated;
  */
 @Data
 @Component
-@Validated
 @ConfigurationProperties(prefix = "mysql")
 public class DbConfig {
 
@@ -28,12 +25,10 @@ public class DbConfig {
     /** 数据库端口，默认 3306 */
     private int port = 3306;
 
-    /** 数据库用户名 */
-    @NotBlank(message = "数据库用户名不能为空")
-    private String user;
+    /** 数据库用户名（通过 MYSQL_USER 环境变量配置） */
+    private String user = "root";
 
-    /** 数据库密码 */
-    @NotBlank(message = "数据库密码不能为空")
+    /** 数据库密码（通过 MYSQL_PASSWORD 环境变量配置，必填） */
     private String password;
 
     /** 默认数据库名（单库模式），为空则使用多库模式 */
