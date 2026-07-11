@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * SSH 隧道配置
+ * 【ssh功能未实现】
  * <p>
  * 映射 MYSQL_SSH_* 环境变量，用于通过跳板机建立 SSH 隧道连接数据库。
  * </p>
