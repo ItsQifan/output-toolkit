@@ -3,8 +3,8 @@ package com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.mcp;
 import com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.config.DbConfig;
 import com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.security.IdentifierValidator;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.tool.annotation.ToolParam;
+import org.springaicommunity.mcp.annotation.McpTool;
+import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -59,7 +59,7 @@ public class McpResourceProvider {
      *
      * @return 资源 URI 列表
      */
-    @Tool(description = "列出所有可用的数据库资源。单库模式返回表列表（mysql://{table}/data），多库模式返回数据库列表（mysql://database/{db}），已过滤系统库。")
+    @McpTool(description = "列出所有可用的数据库资源。单库模式返回表列表（mysql://{table}/data），多库模式返回数据库列表（mysql://database/{db}），已过滤系统库。")
     public String listResources() {
         try {
             log.info("资源列表_收到 list_resources 请求");
@@ -91,9 +91,9 @@ public class McpResourceProvider {
      * @param uri 资源 URI
      * @return CSV 格式的数据内容
      */
-    @Tool(description = "读取指定数据库资源的内容。URI 格式：mysql://{table}/data（表数据）或 mysql://database/{db}（库表列表）。")
+    @McpTool(description = "读取指定数据库资源的内容。URI 格式：mysql://{table}/data（表数据）或 mysql://database/{db}（库表列表）。")
     public String readResource(
-            @ToolParam(description = "资源 URI，格式：mysql://{table}/data 或 mysql://database/{db}") String uri) {
+            @McpToolParam(description = "资源 URI，格式：mysql://{table}/data 或 mysql://database/{db}") String uri) {
         try {
             log.info("资源读取_收到 read_resource 请求, uri={}", uri);
 

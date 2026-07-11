@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    MCP STDIO 模式日志配置
+    核心目的：所有日志输出到 stderr，确保 stdout 只走 MCP JSON-RPC 协议，
+    避免 Spring Boot 启动日志污染 stdout 导致 Claude Code 握手失败。
+
+    日志级别：
+    - WARN  及以上 → stderr（包括 Spring Boot 启动日志、框架警告、错误）
+    - INFO  级别   → stderr（业务日志，防止与 MCP 协议消息混淆）
+    - DEBUG 级别   → stderr（调试信息同样不能出现在 stdout）
+-->
+<configuration>
+    <!-- 控制台 Appender —— 输出到 stderr（System.err） -->
+    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 关键：target 设为 System.err 而非默认的 System.out -->
+        <target>System.err</target>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 根日志配置 -->
+    <root level="WARN">
+        <appender-ref ref="STDERR" />
+    </root>
+
+    <!-- 项目包日志级别 -->
+    <logger name="com.zhouchuanxiang.outputtoolkit" level="INFO" additivity="false">
+        <appender-ref ref="STDERR" />
+    </logger>
+</configuration>

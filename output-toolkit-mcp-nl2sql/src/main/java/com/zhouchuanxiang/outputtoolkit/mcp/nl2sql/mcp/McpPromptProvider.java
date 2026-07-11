@@ -1,8 +1,8 @@
 package com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.mcp;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.tool.annotation.ToolParam;
+import org.springaicommunity.mcp.annotation.McpTool;
+import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Component;
 
 /**
@@ -37,7 +37,7 @@ public class McpPromptProvider {
      *
      * @return 探索指导文本
      */
-    @Tool(description = "获取数据库探索指导 —— 提供系统性的 4 步数据库探索流程")
+    @McpTool(description = "获取数据库探索指导 —— 提供系统性的 4 步数据库探索流程")
     public String exploreDatabase() {
         // Phase 1 stub：返回固定描述文本
         return """
@@ -63,9 +63,9 @@ public class McpPromptProvider {
      * @param tableName 要分析的表名
      * @return 分析指导文本
      */
-    @Tool(description = "获取表分析指导 —— 提供针对特定表的 3 步分析流程")
+    @McpTool(description = "获取表分析指导 —— 提供针对特定表的 3 步分析流程")
     public String analyzeTable(
-            @ToolParam(description = "要分析的表名") String tableName) {
+            @McpToolParam(description = "要分析的表名") String tableName) {
         // Phase 1 stub：返回固定描述文本
         return String.format("""
                         表 '%s' 分析指导（3 步）：

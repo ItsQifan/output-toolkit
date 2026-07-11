@@ -7,8 +7,12 @@ import org.springframework.context.annotation.Configuration;
 /**
  * STDIO 传输模式配置
  * <p>
- * 当 mcp.transport=stdio 时激活，使用标准输入输出与 MCP 客户端通信。
- * Spring AI MCP Server 自动配置 STDIO 模式，此处为条件化占位配置。
+ * 当 spring.ai.mcp.server.stdio=true 时激活（默认），
+ * 使用标准输入输出与 MCP 客户端（如 Claude Desktop）通信。
+ * </p>
+ * <p>
+ * Spring AI 自动处理 STDIO 模式的 MCP 协议通信，无需额外配置。
+ * 本地使用 Claude Desktop 时推荐此模式。
  * </p>
  *
  * @author qifan
@@ -16,9 +20,9 @@ import org.springframework.context.annotation.Configuration;
  */
 @Slf4j
 @Configuration
-@ConditionalOnProperty(name = "spring.ai.mcp.server.stdio", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(name = "spring.ai.mcp.server.stdio", havingValue = "true", matchIfMissing = true)
 public class StdioModeConfig {
 
-    // Phase 1: Spring AI 自动处理 STDIO 模式，无需额外配置
-    // Phase 6: 可能需要添加自定义配置
+    // Spring AI 自动处理 STDIO 传输，无需额外 Bean
+    // MCP 工具/资源/提示词通过 @McpTool 注解自动注册
 }

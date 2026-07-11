@@ -1,6 +1,12 @@
 # ==========================================
 # MySQL MCP Server 配置文件
 # ==========================================
+#
+# 两种运行模式（二选一）：
+#   STDIO 模式 → Claude Desktop 本地使用（推荐）
+#   SSE  模式 → 远程访问 / Web 客户端
+#
+# 切换方式：修改 spring.ai.mcp.server 下的配置
 
 # MySQL 数据库连接配置
 mysql:
@@ -11,37 +17,52 @@ mysql:
   database: seata_db            # 为空则使用多库模式
   charset: utf8mb4
   connect-timeout: 10
-  # SSL 配置
   ssl:
-    mode: DISABLED           # DISABLED / REQUIRED / VERIFY_CA / VERIFY_IDENTITY
-  # SSH 隧道配置
+    mode: DISABLED               # DISABLED / REQUIRED / VERIFY_CA / VERIFY_IDENTITY
   ssh:
     enabled: false
     port: 22
     connect-timeout: 10
 
-# Spring + MCP 配置
+# ==========================================
+# STDIO 模式（Claude Desktop 本地使用）
+# ==========================================
+#spring:
+#  application:
+#    name: mcp-nl2sql
+#  main:
+#    banner-mode: off             # 关闭 banner，避免污染 stdout
+#  ai:
+#    mcp:
+#      server:
+#        name: mcp-nl2sql         # MCP 服务器名称
+#        stdio: true              # 启用 STDIO 模式
+#        enabled: true
+#        capabilities:
+#          tool: true
+#          resource: true
+#          prompt: true
+
+# ==========================================
+# SSH 模式（远程访问，取消注释并注释掉 STDIO 块）
+# ==========================================
 spring:
-  application:
-    name: mcp-nl2sql
-  main:
-    banner-mode: off         # 关闭 Spring Boot banner（避免污染 stdout）
-  ai:
-    mcp:
-      server:
-        name: mcp-nl2sql       # MCP 服务器名称
-        protocol: SSE                # 协议类型：SSE / STREAMABLE / STATELESS
-        stdio: true                  # 关键：启用 STDIO 传输模式（默认 false，不启用则 Claude Code 无法连接）
-        enabled: true                # 启用 MCP 服务器
-        capabilities:
-          tool: true                 # 工具能力（execute_sql / get_schema_info / get_table_sample）
-          resource: true             # 资源能力（list / read table resources）
-          prompt: true               # 提示能力
-        # 功能开关
-        resource-change-notification:
-          enabled: true
-        prompt-change-notification:
-          enabled: true
+   ai:
+     mcp:
+       server:
+         name: mcp-nl2sql
+         protocol: SSE           # 使用 SSE 协议
+         stdio: false            # 关闭 STDIO
+         enabled: true
+         capabilities:
+           tool: true
+           resource: true
+           prompt: true
+server:
+   port: 8000                   # SSE 服务端口
+
+mcp:
+   sse-allowed-hosts: localhost,127.0.0.1  # DNS 重绑定白名单
 
 # 日志配置
 logging:
