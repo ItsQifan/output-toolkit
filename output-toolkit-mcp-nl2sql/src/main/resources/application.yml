@@ -13,10 +13,14 @@ mysql:
   host: ${MYSQL_HOST:localhost}
   port: ${MYSQL_PORT:3306}
   user: ${MYSQL_USER:root}
-  password: ${MYSQL_PASSWORD:1}
+  password: ${MYSQL_PASSWORD:root}
   database: ${MYSQL_DATABASE:}   # 为空则多库模式
   charset: ${MYSQL_CHARSET:utf8mb4}
   connect-timeout: ${MYSQL_CONNECT_TIMEOUT:10}
+  # 增删改操作开关（均可通过环境变量覆盖）
+  insert-enabled: ${MYSQL_INSERT_ENABLED:true}   # 是否允许 INSERT
+  update-enabled: ${MYSQL_UPDATE_ENABLED:true}   # 是否允许 UPDATE
+  delete-enabled: ${MYSQL_DELETE_ENABLED:true}   # 是否允许 DELETE
   ssl:
     mode: DISABLED               # DISABLED / REQUIRED / VERIFY_CA / VERIFY_IDENTITY
   ssh:
@@ -27,42 +31,42 @@ mysql:
 # ==========================================
 # STDIO 模式（Claude Desktop 本地使用）
 # ==========================================
-#spring:
-#  application:
-#    name: mcp-nl2sql
-#  main:
-#    banner-mode: off             # 关闭 banner，避免污染 stdout
-#  ai:
-#    mcp:
-#      server:
-#        name: mcp-nl2sql         # MCP 服务器名称
-#        stdio: true              # 启用 STDIO 模式
-#        enabled: true
-#        capabilities:
-#          tool: true
-#          resource: true
-#          prompt: true
+spring:
+  application:
+    name: mcp-nl2sql
+  main:
+    banner-mode: off             # 关闭 banner，避免污染 stdout
+  ai:
+    mcp:
+      server:
+        name: mcp-nl2sql         # MCP 服务器名称
+        stdio: true              # 启用 STDIO 模式
+        enabled: true
+        capabilities:
+          tool: true
+          resource: true
+          prompt: true
 
 # ==========================================
 # SSH 模式（远程访问，取消注释并注释掉 STDIO 块）
 # ==========================================
-spring:
-   ai:
-     mcp:
-       server:
-         name: mcp-nl2sql
-         protocol: SSE           # 使用 SSE 协议
-         stdio: false            # 关闭 STDIO
-         enabled: true
-         capabilities:
-           tool: true
-           resource: true
-           prompt: true
-server:
-   port: 8000                   # SSE 服务端口
-
-mcp:
-   sse-allowed-hosts: localhost,127.0.0.1  # DNS 重绑定白名单
+#spring:
+#   ai:
+#     mcp:
+#       server:
+#         name: mcp-nl2sql
+#         protocol: SSE           # 使用 SSE 协议
+#         stdio: false            # 关闭 STDIO
+#         enabled: true
+#         capabilities:
+#           tool: true
+#           resource: true
+#           prompt: true
+#server:
+#   port: 8000                   # SSE 服务端口
+#
+#mcp:
+#   sse-allowed-hosts: localhost,127.0.0.1  # DNS 重绑定白名单
 # ==========================================
 
 # 日志配置

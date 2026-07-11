@@ -46,6 +46,15 @@ public class DbConfig {
     /** 连接超时时间（秒），默认 10 */
     private int connectTimeout = 10;
 
+    /** 是否允许执行 INSERT 语句，默认 true */
+    private boolean insertEnabled = true;
+
+    /** 是否允许执行 UPDATE 语句，默认 true */
+    private boolean updateEnabled = true;
+
+    /** 是否允许执行 DELETE 语句，默认 true */
+    private boolean deleteEnabled = true;
+
     /** 认证插件 */
     private String authPlugin;
 

@@ -75,7 +75,7 @@ public class ConnectionFactory {
      */
     @Bean
     public DataSource dataSource() {
-        // Phase 2: 直接使用数据库地址（Phase 3 集成 SSH 隧道后改为通过 SshTunnelManager 获取）
+        // Phase 2: 直接使用数据库地址
         String actualHost = dbConfig.getHost();
         int actualPort = dbConfig.getPort();
 

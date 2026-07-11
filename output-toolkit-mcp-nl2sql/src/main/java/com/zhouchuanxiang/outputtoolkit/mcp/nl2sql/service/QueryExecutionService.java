@@ -1,5 +1,6 @@
 package com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.service;
 
+import com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.config.DbConfig;
 import com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.db.QueryResult;
 import com.zhouchuanxiang.outputtoolkit.mcp.nl2sql.db.QueryResult.QueryType;
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +32,12 @@ import java.util.List;
 public class QueryExecutionService {
 
     private final JdbcTemplate jdbcTemplate;
+    private final DbConfig dbConfig;
 
-    public QueryExecutionService(JdbcTemplate jdbcTemplate) {
+    public QueryExecutionService(JdbcTemplate jdbcTemplate,
+                                  DbConfig dbConfig) {
         this.jdbcTemplate = jdbcTemplate;
+        this.dbConfig = dbConfig;
     }
 
     /**
@@ -60,7 +64,14 @@ public class QueryExecutionService {
             case SHOW -> executeShow(cleanedSql);
             case DESCRIBE -> executeDescribe(cleanedSql);
             case SELECT -> executeSelect(cleanedSql);
-            case DML -> executeDml(cleanedSql);
+            case DML -> {
+                // 增删改开关校验
+                String error = checkCrudSwitch(cleanedSql);
+                if (error != null) {
+                    throw new UnsupportedOperationException(error);
+                }
+                yield executeDml(cleanedSql);
+            }
         };
     }
 
@@ -98,6 +109,51 @@ public class QueryExecutionService {
 
         // INSERT / UPDATE / DELETE / CREATE / ALTER / DROP / TRUNCATE / SET 等 → DML
         return QueryType.DML;
+    }
+
+    /**
+     * 校验 INSERT/UPDATE/DELETE 操作开关
+     * <p>
+     * 根据配置项 {@code mysql.insert-enabled} / {@code mysql.update-enabled} /
+     * {@code mysql.delete-enabled} 判断当前 SQL 是否允许执行。
+     * 仅校验增删改三种写操作，DDL（CREATE/ALTER/DROP 等）不受此开关限制。
+     * </p>
+     *
+     * @param sql 清理后的 SQL 语句
+     * @return 校验失败时返回错误信息，通过时返回 null
+     */
+    private String checkCrudSwitch(String sql) {
+        String upper = sql.toUpperCase().trim();
+
+        // 检测 INSERT 操作
+        if (upper.startsWith("INSERT ")) {
+            if (!dbConfig.isInsertEnabled()) {
+                log.warn("SQL执行_INSERT操作已禁用, sql={}", sql.substring(0, Math.min(100, sql.length())));
+                return "INSERT 操作已被管理员禁用，如需使用请联系管理员开启 mysql.insert-enabled=true";
+            }
+            return null;
+        }
+
+        // 检测 UPDATE 操作
+        if (upper.startsWith("UPDATE ")) {
+            if (!dbConfig.isUpdateEnabled()) {
+                log.warn("SQL执行_UPDATE操作已禁用, sql={}", sql.substring(0, Math.min(100, sql.length())));
+                return "UPDATE 操作已被管理员禁用，如需使用请联系管理员开启 mysql.update-enabled=true";
+            }
+            return null;
+        }
+
+        // 检测 DELETE 操作（注意 FROM 可有可无，如 DELETE FROM t 或 DELETE t）
+        if (upper.startsWith("DELETE ")) {
+            if (!dbConfig.isDeleteEnabled()) {
+                log.warn("SQL执行_DELETE操作已禁用, sql={}", sql.substring(0, Math.min(100, sql.length())));
+                return "DELETE 操作已被管理员禁用，如需使用请联系管理员开启 mysql.delete-enabled=true";
+            }
+            return null;
+        }
+
+        // DDL（CREATE/ALTER/DROP/TRUNCATE）不受开关限制，直接放行
+        return null;
     }
 
     /**

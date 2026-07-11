@@ -28,10 +28,10 @@ public class McpPromptProvider {
      * <p>
      * 引导 AI 按照 4 个步骤系统性地探索数据库：
      * <ol>
-     *   <li>使用 list_resources 了解数据库中有哪些表</li>
-     *   <li>使用 get_schema_info 查看关键表的结构</li>
-     *   <li>使用 get_table_sample 获取样本数据理解内容</li>
-     *   <li>使用 execute_sql 执行具体查询</li>
+     *   <li>使用 listResources 了解数据库中有哪些表</li>
+     *   <li>使用 getSchemaInfo 查看关键表的结构</li>
+     *   <li>使用 getTableSample 获取样本数据理解内容</li>
+     *   <li>使用 executeSql 执行具体查询</li>
      * </ol>
      * </p>
      *
@@ -42,10 +42,10 @@ public class McpPromptProvider {
         // Phase 1 stub：返回固定描述文本
         return """
                 数据库探索指导（4 步）：
-                1. 使用 list_resources 了解数据库中有哪些表
-                2. 使用 get_schema_info 查看关键表的结构（列名、类型、注释）
-                3. 使用 get_table_sample 获取样本数据以理解数据内容和模式
-                4. 使用 execute_sql 执行具体查询以回答用户问题
+                1. 使用 listResources 了解数据库中有哪些表
+                2. 使用 getSchemaInfo 查看关键表的结构（列名、类型、注释）
+                3. 使用 getTableSample 获取样本数据以理解数据内容和模式
+                4. 使用 executeSql 执行具体查询以回答用户问题
                 """;
     }
 
@@ -69,9 +69,9 @@ public class McpPromptProvider {
         // Phase 1 stub：返回固定描述文本
         return String.format("""
                         表 '%s' 分析指导（3 步）：
-                        1. 使用 get_schema_info("%s") 获取表的完整列信息
-                        2. 使用 get_table_sample("%s") 查看样本数据，了解数据分布和内容
-                        3. 使用 execute_sql 执行聚合查询（COUNT、GROUP BY 等）获取统计信息
+                        1. 使用 getSchemaInfo("%s") 获取表的完整列信息
+                        2. 使用 getTableSample("%s") 查看样本数据，了解数据分布和内容
+                        3. 使用 executeSql 执行聚合查询（COUNT、GROUP BY 等）获取统计信息
                         """,
                 tableName, tableName, tableName);
     }
