@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent RAG Demo - 聊天演示</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a2e; color: #e0e0e0; height: 100vh; display: flex; }
+
+        /* 侧边栏 */
+        .sidebar { width: 280px; background: #16213e; display: flex; flex-direction: column; border-right: 1px solid #0f3460; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid #0f3460; }
+        .sidebar-header h2 { font-size: 18px; color: #e94560; margin-bottom: 4px; }
+        .sidebar-header p { font-size: 12px; color: #888; }
+        .sidebar-actions { padding: 12px 20px; }
+        .btn-new-chat { width: 100%; padding: 10px; background: #e94560; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .btn-new-chat:hover { background: #d63851; }
+        .conversation-list { flex: 1; overflow-y: auto; padding: 8px 12px; }
+        .conv-item { padding: 12px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; font-size: 13px; color: #aaa; }
+        .conv-item:hover, .conv-item.active { background: #0f3460; color: #e0e0e0; }
+        .conv-item .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .conv-item .time { font-size: 11px; color: #666; margin-top: 4px; }
+        .conv-item .delete-btn { float: right; background: none; border: none; color: #666; cursor: pointer; font-size: 14px; }
+        .conv-item .delete-btn:hover { color: #e94560; }
+
+        /* 文档上传区 */
+        .doc-upload { padding: 12px 20px; border-top: 1px solid #0f3460; }
+        .doc-upload h3 { font-size: 13px; color: #888; margin-bottom: 8px; }
+        .doc-upload input[type="file"] { display: none; }
+        .btn-upload { width: 100%; padding: 8px; background: #0f3460; color: #aaa; border: 1px dashed #333; border-radius: 8px; cursor: pointer; font-size: 12px; text-align: center; }
+        .btn-upload:hover { background: #1a4080; }
+        .doc-list { margin-top: 8px; max-height: 100px; overflow-y: auto; }
+        .doc-item { font-size: 11px; color: #666; padding: 2px 0; display: flex; justify-content: space-between; }
+        .doc-item .del { color: #e94560; cursor: pointer; }
+
+        /* 主聊天区 */
+        .main { flex: 1; display: flex; flex-direction: column; }
+        .chat-header { padding: 16px 24px; border-bottom: 1px solid #0f3460; font-size: 16px; font-weight: bold; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px 24px; }
+        .chat-input-area { padding: 16px 24px; border-top: 1px solid #0f3460; display: flex; gap: 12px; }
+        .chat-input { flex: 1; padding: 12px 16px; background: #16213e; border: 1px solid #0f3460; border-radius: 12px; color: #e0e0e0; font-size: 14px; resize: none; outline: none; }
+        .chat-input:focus { border-color: #e94560; }
+        .btn-send { padding: 12px 24px; background: #e94560; color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 14px; }
+        .btn-send:hover { background: #d63851; }
+        .btn-send:disabled { background: #333; cursor: not-allowed; }
+
+        /* 消息气泡 */
+        .message { margin-bottom: 20px; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .msg-user { text-align: right; }
+        .msg-user .bubble { background: #e94560; display: inline-block; }
+        .msg-assistant .bubble { background: #16213e; }
+        .bubble { max-width: 80%; padding: 12px 18px; border-radius: 16px; font-size: 14px; line-height: 1.6; word-wrap: break-word; text-align: left; }
+        .bubble pre { background: #0a0a1a; padding: 12px; border-radius: 8px; overflow-x: auto; margin: 8px 0; font-size: 13px; }
+        .bubble code { background: #0a0a1a; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+
+        /* 推理链卡片 */
+        .thinking-card { background: #0f3460; border: 1px solid #1a4080; border-radius: 10px; padding: 12px 16px; margin: 8px 0; font-size: 13px; }
+        .thinking-card .icon { margin-right: 6px; }
+        .thinking-card .tool-name { color: #f0c040; font-weight: bold; }
+        .thinking-card .time-label { color: #888; font-size: 11px; }
+
+        /* 空状态 */
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #666; }
+        .empty-state h3 { font-size: 20px; margin-bottom: 12px; color: #888; }
+        .empty-state p { font-size: 14px; margin-bottom: 6px; }
+
+        /* 提示信息 */
+        .toast { position: fixed; top: 20px; right: 20px; background: #0f3460; color: #e0e0e0; padding: 12px 20px; border-radius: 8px; font-size: 13px; z-index: 1000; animation: slideIn 0.3s; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<!-- 侧边栏 -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <h2>Agent RAG Demo</h2>
+        <p>单Agent + RAG + 工具调用</p>
+    </div>
+    <div class="sidebar-actions">
+        <button class="btn-new-chat" onclick="newChat()">+ 新建对话</button>
+    </div>
+    <div class="conversation-list" id="conversationList"></div>
+    <div class="doc-upload">
+        <h3>📄 知识库文档</h3>
+        <input type="file" id="fileInput" accept=".md,.txt" onchange="uploadDocument()">
+        <button class="btn-upload" onclick="document.getElementById('fileInput').click()">+ 上传 Markdown/TXT</button>
+        <div class="doc-list" id="docList"></div>
+    </div>
+</div>
+
+<!-- 主聊天区 -->
+<div class="main">
+    <div class="chat-header" id="chatTitle">新对话</div>
+    <div class="chat-messages" id="chatMessages">
+        <div class="empty-state">
+            <h3>🤖 Agent RAG Demo</h3>
+            <p>我是带工具调用能力的 AI 助手</p>
+            <p style="margin-top:12px;font-size:13px;">📄 上传 Markdown 文档到知识库</p>
+            <p style="font-size:13px;">🔍 提问文档相关的问题</p>
+            <p style="font-size:13px;">🛠️ 试试："帮我查最近的订单"</p>
+        </div>
+    </div>
+    <div class="chat-input-area">
+        <textarea class="chat-input" id="chatInput" rows="2" placeholder="输入问题，如：帮我查一下最近一周的订单..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+        <button class="btn-send" id="btnSend" onclick="sendMessage()">发送</button>
+    </div>
+</div>
+
+<script>
+    let currentConversationId = null;
+    let isProcessing = false;
+    let currentAssistantBubble = null;
+    let answerBuffer = '';
+
+    // ===== 初始化 =====
+    loadConversations();
+    loadDocuments();
+
+    // ===== 会话管理 =====
+    function newChat() {
+        currentConversationId = null;
+        document.getElementById('chatMessages').innerHTML = `
+            <div class="empty-state">
+                <h3>🤖 新对话</h3>
+                <p>开始一个新的对话吧</p>
+            </div>`;
+        document.getElementById('chatTitle').textContent = '新对话';
+        document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+    }
+
+    async function loadConversations() {
+        try {
+            const res = await fetch('/api/conversations?userId=default');
+            const data = await res.json();
+            const list = document.getElementById('conversationList');
+            list.innerHTML = data.data.map(c => `
+                <div class="conv-item${c.id === currentConversationId ? ' active' : ''}" onclick="switchConversation(${c.id})">
+                    <button class="delete-btn" onclick="event.stopPropagation();deleteConversation(${c.id})">×</button>
+                    <div class="title">${escapeHtml(c.title)}</div>
+                    <div class="time">${formatTime(c.updatedAt)}</div>
+                </div>`).join('');
+        } catch(e) { console.error('加载会话列表失败', e); }
+    }
+
+    async function switchConversation(id) {
+        currentConversationId = id;
+        document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+        document.querySelector(`.conv-item[onclick*="${id}"]`)?.classList.add('active');
+
+        try {
+            const res = await fetch(`/api/conversations/${id}/messages`);
+            const data = await res.json();
+            document.getElementById('chatTitle').textContent = '对话 #' + id;
+            renderHistory(data.data);
+        } catch(e) { console.error('加载消息失败', e); }
+    }
+
+    async function deleteConversation(id) {
+        if (!confirm('确定删除此会话？')) return;
+        await fetch(`/api/conversations/${id}`, { method: 'DELETE' });
+        if (currentConversationId === id) newChat();
+        loadConversations();
+    }
+
+    function renderHistory(messages) {
+        const container = document.getElementById('chatMessages');
+        container.innerHTML = messages.map(m => {
+            if (m.role === 'user') return userBubble(m.content);
+            if (m.role === 'assistant') return assistantBubble(m.content);
+            if (m.role === 'tool') return toolBubble(m.toolName, m.content);
+            return '';
+        }).join('');
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // ===== 发送消息 =====
+    async function sendMessage() {
+        const input = document.getElementById('chatInput');
+        const question = input.value.trim();
+        if (!question || isProcessing) return;
+
+        input.value = '';
+        isProcessing = true;
+        document.getElementById('btnSend').disabled = true;
+        answerBuffer = '';
+
+        const container = document.getElementById('chatMessages');
+        // 清除空状态
+        if (container.querySelector('.empty-state')) container.innerHTML = '';
+        // 添加用户消息
+        container.innerHTML += userBubble(question);
+        container.scrollTop = container.scrollHeight;
+
+        // 创建回答气泡
+        const assistantDiv = document.createElement('div');
+        assistantDiv.className = 'message msg-assistant';
+        assistantDiv.innerHTML = '<div class="bubble" id="currentAnswer">⏳ 思考中...</div>';
+        container.appendChild(assistantDiv);
+        currentAssistantBubble = document.getElementById('currentAnswer');
+        container.scrollTop = container.scrollHeight;
+
+        // SSE 连接
+        const params = new URLSearchParams({ question, userId: 'default' });
+        if (currentConversationId) params.append('conversationId', currentConversationId);
+
+        const eventSource = new EventSource('/api/chat/stream?' + params.toString());
+
+        eventSource.addEventListener('thinking', e => {
+            const data = JSON.parse(e.data);
+            // 在回答区上方插入思考卡片
+            const card = document.createElement('div');
+            card.className = 'thinking-card';
+            card.innerHTML = `<span class="icon">💭</span> ${escapeHtml(data.message)}`;
+            container.insertBefore(card, assistantDiv);
+            container.scrollTop = container.scrollHeight;
+        });
+
+        eventSource.addEventListener('tool_call', e => {
+            const data = JSON.parse(e.data);
+            const card = document.createElement('div');
+            card.className = 'thinking-card';
+            card.id = 'tool-' + data.toolName;
+            card.innerHTML = `<span class="icon">🔧</span> 调用工具：<span class="tool-name">${escapeHtml(data.toolName)}</span> <span class="time-label">执行中...</span>`;
+            container.insertBefore(card, assistantDiv);
+            container.scrollTop = container.scrollHeight;
+        });
+
+        eventSource.addEventListener('answer', e => {
+            const data = JSON.parse(e.data);
+            answerBuffer = data.content;
+            // 简单的 Markdown 渲染：代码块、粗体、列表
+            currentAssistantBubble.innerHTML = renderMarkdown(answerBuffer);
+            container.scrollTop = container.scrollHeight;
+        });
+
+        eventSource.addEventListener('done', e => {
+            const data = JSON.parse(e.data);
+            currentConversationId = data.conversationId;
+            document.getElementById('chatTitle').textContent = '对话 #' + data.conversationId;
+            eventSource.close();
+            isProcessing = false;
+            document.getElementById('btnSend').disabled = false;
+            document.getElementById('chatInput').focus();
+            loadConversations();
+            // 更新思考卡片中的时间
+            document.querySelectorAll('.thinking-card .time-label').forEach(el => {
+                if (el.textContent.includes('执行中')) el.textContent = '已完成';
+            });
+        });
+
+        eventSource.addEventListener('error', e => {
+            if (e.data) {
+                const data = JSON.parse(e.data);
+                currentAssistantBubble.innerHTML = `<span style="color:#e94560">❌ 出错了：${escapeHtml(data.message)}</span>`;
+            } else {
+                currentAssistantBubble.innerHTML = '<span style="color:#e94560">❌ 连接中断，请重试</span>';
+            }
+            eventSource.close();
+            isProcessing = false;
+            document.getElementById('btnSend').disabled = false;
+        });
+    }
+
+    // ===== 文档管理 =====
+    async function uploadDocument() {
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/document/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            // 异步受理模式：上传即返回，后台 Kafka 消费者处理，轮询状态直到完成
+            if (data.code === 200) {
+                showToast(`📤 ${data.data.filename} 已受理，后台处理中...`);
+                pollDocumentStatus(data.data.documentId, data.data.filename);
+            } else {
+                showToast('❌ ' + data.msg);
+            }
+            loadDocuments();
+        } catch(e) {
+            showToast('❌ 上传失败');
+        }
+        fileInput.value = '';
+    }
+
+    // 轮询文档处理状态（每2秒一次，最多60秒）
+    async function pollDocumentStatus(documentId, filename, attempt = 0) {
+        if (attempt > 30) { showToast(`⏳ ${filename} 处理超时，请稍后刷新查看`); return; }
+        try {
+            const res = await fetch('/api/document/' + documentId + '/status');
+            const data = await res.json();
+            if (data.code !== 200) return;
+            const st = data.data.status;
+            if (st === 'COMPLETED') {
+                showToast(`✅ ${filename} 处理完成（${data.data.chunkCount} 个分块）`);
+                loadDocuments();
+                return;
+            }
+            if (st === 'FAILED') {
+                showToast(`❌ ${filename} 处理失败：${data.data.errorMsg || '未知错误'}`);
+                loadDocuments();
+                return;
+            }
+            // PENDING / PROCESSING 继续轮询
+            setTimeout(() => pollDocumentStatus(documentId, filename, attempt + 1), 2000);
+        } catch(e) { console.error('查询文档状态失败', e); }
+    }
+
+    async function loadDocuments() {
+        try {
+            const res = await fetch('/api/document/list');
+            const data = await res.json();
+            const list = document.getElementById('docList');
+            const statusIcon = { PENDING: '⏳', PROCESSING: '⚙️', COMPLETED: '📄', FAILED: '❌' };
+            list.innerHTML = data.data.map(d => `
+                <div class="doc-item">
+                    <span>${statusIcon[d.status] || '📄'} ${escapeHtml(d.filename)} (${d.status === 'COMPLETED' ? d.chunkCount + '块' : d.status})</span>
+                    <span class="del" onclick="deleteDocument('${escapeHtml(d.filename)}')">×</span>
+                </div>`).join('');
+        } catch(e) { console.error('加载文档列表失败', e); }
+    }
+
+    async function deleteDocument(filename) {
+        await fetch('/api/document/' + encodeURIComponent(filename), { method: 'DELETE' });
+        loadDocuments();
+    }
+
+    // ===== 工具函数 =====
+    function userBubble(text) {
+        return `<div class="message msg-user"><div class="bubble">${escapeHtml(text)}</div></div>`;
+    }
+    function assistantBubble(text) {
+        return `<div class="message msg-assistant"><div class="bubble">${renderMarkdown(text)}</div></div>`;
+    }
+    function toolBubble(name, text) {
+        return `<div class="thinking-card"><span class="icon">🔧</span> 工具：<span class="tool-name">${escapeHtml(name)}</span> —— ${escapeHtml(text.substring(0, 100))}</div>`;
+    }
+
+    function renderMarkdown(text) {
+        if (!text) return '';
+        return text
+            .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n- /g, '\n• ')
+            .replace(/\n\d+\. /g, m => '\n' + m.trim() + ' ')
+            .replace(/\n/g, '<br>');
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatTime(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        return d.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+</script>
+</body>
+</html>

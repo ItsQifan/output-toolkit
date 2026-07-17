@@ -1,0 +1,148 @@
+# ==========================================
+# Agent RAG Demo 应用配置
+# 启动前需设置环境变量:
+#   OPENAI_API_KEY   - LLM API Key（必填）
+#   OPENAI_BASE_URL  - LLM API 地址（可选，默认 OpenAI 官方）
+#   LLM_MODEL        - 模型名称（可选，默认 gpt-4o-mini）
+# ==========================================
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: agent-rag
+
+  # ===== LLM 配置（OpenAI 兼容协议）=====
+  # tips: OpenAI 兼容协议意味着只要是 "/v1/chat/completions" 格式的 API，
+  #       都可以用。比如 DeepSeek、Qwen、智谱GLM、Ollama 等都兼容这个格式。
+  #       你只需要改 base-url 和 api-key 就能切换厂商。
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:sk-bd552dccfe0341db80fc1d82a2635e78}
+      base-url: ${OPENAI_BASE_URL:https://api.deepseek.com}
+      chat:
+        options:
+          model: ${LLM_MODEL:deepseek-v4-flash}
+          temperature: 0.7
+          max-tokens: 4096
+      # LLM 调用重试配置（应对网络抖动和限流）
+      retry:
+        max-attempts: 3
+        backoff:
+          delay: 1000
+          multiplier: 2
+      # Embedding 模型配置（文本→向量）
+      # tips: chat 与 embedding 可以使用不同供应商——DeepSeek 不提供 embedding API，
+      #       此处 embedding 单独指向阿里百炼 DashScope 的 OpenAI 兼容端点，
+      #       chat 仍走 DeepSeek。text-embedding-v3 输出 1024 维向量，
+      #       必须与下方 Milvus 的 embedding-dimension 保持一致。
+      embedding:
+        api-key: ${DASHSCOPE_API_KEY:}
+        base-url: ${EMBEDDING_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode}
+        options:
+          model: ${EMBEDDING_MODEL:text-embedding-v3}
+          dimensions: ${EMBEDDING_DIMENSION:1024}
+
+    # ===== Milvus 向量数据库配置 =====
+    # tips: Milvus 是专业向量数据库，相比内存版 ConcurrentHashMap 实现，
+    #       支持海量向量的 ANN（近似最近邻）索引检索、持久化和水平扩展。
+    #       docker-compose up -d 即可启动本地 Milvus（gRPC 端口 19530）。
+    vectorstore:
+      milvus:
+        client:
+          host: ${MILVUS_HOST:localhost}
+          port: ${MILVUS_PORT:19530}
+        database-name: default
+        collection-name: knowledge_chunk
+        # 向量维度需与 Embedding 模型输出一致（text-embedding-v3 为 1024 维）
+        embedding-dimension: ${EMBEDDING_DIMENSION:1024}
+        # IVF_FLAT：倒排索引 + 精确距离计算，中小规模数据下精度与性能均衡
+        index-type: IVF_FLAT
+        # 余弦相似度：与文本语义相似度天然契合（只关注方向不关注模长）
+        metric-type: COSINE
+        # 应用启动时自动创建 collection 和索引
+        initialize-schema: true
+
+  # ===== Kafka 配置（文档处理异步解耦）=====
+  # tips: 文档上传接口只负责"接收文件 + 发消息"，
+  #       切分/Embedding/入库由消费者异步完成，上传接口响应从秒级降到毫秒级。
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # acks=all：等待所有副本确认，保证文档处理消息不丢失
+      acks: all
+      retries: 3
+    consumer:
+      group-id: agent-rag-doc-processor
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # earliest：新消费组从头消费，避免漏掉应用重启前的入库消息
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+    listener:
+      # 手动提交 offset：确保"处理成功后才提交"，失败消息可重新消费
+      ack-mode: manual_immediate
+
+  # ===== Redis 配置（两级缓存）=====
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+
+  # ===== 数据源配置（会话持久化 + 模拟订单）=====
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:agent_rag_db}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 10000
+
+  # 启动时自动初始化表结构和测试数据
+  # 当前已关闭：已在本地 MySQL 手动执行过 schema.sql 和 data.sql
+  # 如需恢复自动初始化，将 mode 改为 always
+  sql:
+    init:
+      mode: never
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+
+# ===== SpringDoc OpenAPI（Swagger）=====
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+# ===== 业务自定义配置 =====
+agent-rag:
+  # 上传文档的本地存储目录（消费者从此目录读取文件内容）
+  upload-dir: ${UPLOAD_DIR:./data/uploads}
+  kafka:
+    # 文档处理消息主题：上传接口发送，DocumentProcessConsumer 消费
+    doc-process-topic: agent-rag-doc-process
+  cache:
+    # L1 热点问答缓存过期时间（秒）：命中后跳过检索与 LLM 调用直接返回
+    answer-ttl-seconds: 3600
+    # L2 检索结果缓存过期时间（秒）：命中后跳过 Embedding 计算与 Milvus 查询
+    retrieval-ttl-seconds: 1800
+
+# ===== 日志配置 =====
+logging:
+  level:
+    root: WARN
+    com.zhouchuanxiang.outputtoolkit.agentrag: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

@@ -1,0 +1,127 @@
+# ==========================================
+# Agent RAG 基础依赖服务编排
+# 一键启动: docker-compose up -d
+#
+# 服务清单：
+#   - Milvus 2.4  向量数据库（语义检索，embedded etcd + 本地存储单容器模式）
+#   - Kafka 3.7   消息队列（KRaft 单节点，文档处理异步解耦）
+#   - Redis 6.2   缓存（热点问答缓存 + 检索结果缓存）
+#
+# 注意：MySQL 已在本地手动启动并初始化（agent_rag_db），未纳入编排
+# 如需恢复 Docker 方式启动 MySQL，取消下方 mysql 服务注释即可
+# ==========================================
+services:
+  # ==========================================
+  # MySQL 8.0 —— 会话持久化 + 模拟订单数据
+  # 当前未启用：已在本地手动启动 MySQL 并创建了 agent_rag_db，执行过初始化脚本
+  # ==========================================
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: agent-rag-mysql
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: root
+  #     MYSQL_DATABASE: agent_rag_db
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     # 启动时自动初始化表结构和测试数据
+  #     - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+  #     - ./src/main/resources/data.sql:/docker-entrypoint-initdb.d/02-data.sql
+  #     - mysql-data:/var/lib/mysql
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # ==========================================
+  # Milvus 2.4 单容器独立模式 —— 向量存储与语义检索
+  # 采用 embedded etcd + 本地磁盘存储，免去 etcd/minio 两个额外容器
+  # gRPC 端口 19530 供 SDK 连接，9091 为健康检查端口
+  # ==========================================
+  milvus:
+    image: milvusdb/milvus:v2.4.15
+    container_name: agent-rag-milvus
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      # 使用内嵌 etcd，避免单独部署 etcd 容器
+      ETCD_USE_EMBED: "true"
+      ETCD_DATA_DIR: /var/lib/milvus/etcd
+      ETCD_CONFIG_PATH: /milvus/configs/embedEtcd.yaml
+      # 使用本地磁盘存储，避免单独部署 minio 容器
+      COMMON_STORAGETYPE: local
+    ports:
+      - "19530:19530"   # Milvus gRPC 端口（SDK 连接用）
+      - "9091:9091"     # 健康检查 / metrics 端口
+    volumes:
+      - ./docker/embedEtcd.yaml:/milvus/configs/embedEtcd.yaml
+      - milvus-data:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ==========================================
+  # Kafka 3.7 KRaft 单节点 —— 文档处理异步解耦
+  # KRaft 模式无需 Zookeeper，单容器即可运行
+  # 文档上传后发送消息到 topic，消费者异步完成切分/向量化/入库
+  # ==========================================
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: agent-rag-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      # broker + controller 一体（单节点 KRaft 模式）
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      # 宿主机应用通过 localhost:9092 连接
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      # 单节点副本因子只能为 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      # 允许自动创建 topic，简化演示环境
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  # ==========================================
+  # Redis 6.2 —— 两级缓存
+  # L1: 热点问答缓存（问题归一化后精确命中，直接返回答案）
+  # L2: 向量检索结果缓存（减少重复 Embedding 计算与 Milvus 查询）
+  # ==========================================
+  redis:
+    image: redis:6.2-alpine
+    container_name: agent-rag-redis
+    ports:
+      - "6379:6379"
+    # 限制内存并采用 LRU 淘汰，符合缓存场景定位
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  # mysql-data:  # 未来启用 Docker MySQL 时取消注释
+  milvus-data:
+  kafka-data:
+  redis-data:

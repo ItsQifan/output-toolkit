@@ -34,6 +34,7 @@
         <module>output-toolkit-crypto</module>
         <module>output-toolkit-justopen</module>
         <module>output-toolkit-mcp-nl2sql</module>
+        <module>output-toolkit-agent-rag</module>
     </modules>
 
     <properties>
